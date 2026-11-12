@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 import torch
+from sklearn.model_selection import StratifiedGroupKFold
 
 CONTEXTS = {2: 0, 3: 1, 4: 2, 9: 3, 12: 4}
 SAMPLES = 2 * 250000
@@ -25,12 +26,13 @@ if __name__ == "__main__":
     data["label"] = data.Context.map(CONTEXTS)
     data["day"] = data["Recording time"].str[:10]
     days = sorted(data.day.unique())
-    data["split"] = "train"
-    data.loc[data.day >= days[int(0.8 * len(days))], "split"] = "val"
-    data.loc[data.day >= days[int(0.9 * len(days))], "split"] = "test"
+    data["fold"] = -1
+    rest = data[data.day < days[int(0.9 * len(days))]]
+    for fold, (_, rows) in enumerate(StratifiedGroupKFold(5).split(rest, rest.label, rest.day)):
+        data.loc[rest.index[rows], "fold"] = fold
 
     with ProcessPoolExecutor() as pool:
         x = list(pool.map(spectrogram, data["File name"], data["Start sample"], data["End sample"], chunksize=64))
     np.save("data/x.npy", np.stack(x))
-    data[["label", "split"]].to_csv("data/y.csv", index=False)
-    print(pd.crosstab(data.label, data.split))
+    data[["label", "fold"]].to_csv("data/y.csv", index=False)
+    print(pd.crosstab(data.label, data.fold))
