@@ -62,6 +62,7 @@ for fold in folds:
     model.to(device)
     loss_function = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
     for epoch in range(5):
         model.train()
@@ -70,6 +71,7 @@ for fold in folds:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        scheduler.step()
         truth, guesses = predict(train)
         print(f"{name}, epoch {epoch + 1}: train accuracy {accuracy(truth, guesses, 1):.3f}", end=", ")
         truth, guesses = predict(val)
