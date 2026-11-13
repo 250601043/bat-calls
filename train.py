@@ -27,15 +27,19 @@ def run(images):
 
 def predict(data):
     model.eval()
-    truth, prediction = [], []
+    truth, guesses = [], []
     with torch.no_grad():
         for images, target in data:
             truth += target.tolist()
-            prediction += run(images).argmax(1).tolist()
-    return np.array(truth), np.array(prediction)
+            guesses += run(images).topk(2).indices.tolist()
+    return np.array(truth), np.array(guesses)
 
 
-all_truth, all_prediction = [], []
+def accuracy(truth, guesses, n):
+    return (truth[:, None] == guesses[:, :n]).any(1).mean()
+
+
+all_truth, all_guesses = [], []
 for fold in range(5):
     train = loader((y.fold >= 0) & (y.fold != fold), True)
     val = loader(y.fold == fold, False)
@@ -52,11 +56,17 @@ for fold in range(5):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        truth, prediction = predict(train)
-        print(f"fold {fold + 1}, epoch {epoch + 1}: train accuracy {(truth == prediction).mean():.3f}", end=", ")
-        truth, prediction = predict(val)
-        print(f"validation accuracy {(truth == prediction).mean():.3f}", flush=True)
+        truth, guesses = predict(train)
+        print(f"fold {fold + 1}, epoch {epoch + 1}: train accuracy {accuracy(truth, guesses, 1):.3f}", end=", ")
+        truth, guesses = predict(val)
+        print(f"validation accuracy {accuracy(truth, guesses, 1):.3f}, within two guesses {accuracy(truth, guesses, 2):.3f}", flush=True)
     all_truth += truth.tolist()
-    all_prediction += prediction.tolist()
+    all_guesses += guesses.tolist()
 
-print(classification_report(all_truth, all_prediction, target_names=CLASSES, digits=3))
+truth, guesses = np.array(all_truth), np.array(all_guesses)
+counts = np.sort(np.bincount(truth))[::-1]
+print(classification_report(truth, guesses[:, 0], target_names=CLASSES, digits=3))
+print(f"one guess: model {accuracy(truth, guesses, 1):.3f}, blind guess {counts[0] / len(truth):.3f}")
+print(f"two guesses: model {accuracy(truth, guesses, 2):.3f}, blind guess {counts[:2].sum() / len(truth):.3f}")
+for i, name in enumerate(CLASSES):
+    print(f"{name} within two guesses: {accuracy(truth[truth == i], guesses[truth == i], 2):.3f}")
