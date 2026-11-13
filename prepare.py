@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 import torch
-from sklearn.model_selection import StratifiedGroupKFold
 
 CONTEXTS = {2: 0, 3: 1, 4: 2, 9: 3, 12: 4}
 SAMPLES = 2 * 250000
@@ -26,10 +25,8 @@ if __name__ == "__main__":
     data["label"] = data.Context.map(CONTEXTS)
     data["day"] = data["Recording time"].str[:10]
     days = sorted(data.day.unique())
-    data["fold"] = -1
-    rest = data[data.day < days[int(0.9 * len(days))]]
-    for fold, (_, rows) in enumerate(StratifiedGroupKFold(5).split(rest, rest.label, rest.day)):
-        data.loc[rest.index[rows], "fold"] = fold
+    cut = int(0.9 * len(days))
+    data["fold"] = data.day.map({day: i * 5 // cut if i < cut else -1 for i, day in enumerate(days)})
     extra = (data.label == 4).sum() - (data.label == 2).sum()
     data = data.drop(data[data.label == 4].sample(extra, random_state=0).index).reset_index(drop=True)
 
