@@ -60,7 +60,7 @@ for fold in folds:
     model = torchvision.models.resnet18(weights="IMAGENET1K_V1")
     model.fc = nn.Linear(512, len(CLASSES))
     model.to(device)
-    loss_function = nn.CrossEntropyLoss()
+    loss_function = nn.CrossEntropyLoss(weight=torch.tensor([5.0, 1, 1, 1, 1], device=device))
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
