@@ -30,6 +30,8 @@ if __name__ == "__main__":
     rest = data[data.day < days[int(0.9 * len(days))]]
     for fold, (_, rows) in enumerate(StratifiedGroupKFold(5).split(rest, rest.label, rest.day)):
         data.loc[rest.index[rows], "fold"] = fold
+    extra = (data.label == 4).sum() - (data.label == 2).sum()
+    data = data.drop(data[data.label == 4].sample(extra, random_state=0).index).reset_index(drop=True)
 
     with ProcessPoolExecutor() as pool:
         x = list(pool.map(spectrogram, data["File name"], data["Start sample"], data["End sample"], chunksize=64))
