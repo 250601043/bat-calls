@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pandas as pd
 import torch
@@ -8,6 +10,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 CLASSES = ["Biting", "Feeding", "Fighting", "Mating protest", "Sleeping"]
 device = "cuda" if torch.cuda.is_available() else "cpu"
+random.seed(0)
 torch.manual_seed(0)
 
 x = torch.from_numpy(np.load("data/x.npy"))
@@ -18,6 +21,14 @@ labels = torch.tensor(y.label.to_numpy())
 def loader(rows, train):
     rows = torch.tensor(rows.to_numpy())
     return DataLoader(TensorDataset(x[rows], labels[rows]), batch_size=64, shuffle=train)
+
+
+def blank_strips(images):
+    for image in images:
+        f, t = random.randrange(112), random.randrange(240)
+        image[f:f + random.randrange(17)] = -80
+        image[:, t:t + random.randrange(17)] = -80
+    return images
 
 
 def run(images):
@@ -52,7 +63,7 @@ for fold in range(5):
     for epoch in range(5):
         model.train()
         for images, target in train:
-            loss = loss_function(run(images), target.to(device))
+            loss = loss_function(run(blank_strips(images)), target.to(device))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
