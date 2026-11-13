@@ -7,7 +7,7 @@ import soundfile as sf
 import torch
 from sklearn.model_selection import StratifiedGroupKFold
 
-CONTEXTS = {2: 0, 3: 1, 4: 2, 9: 3, 12: 4}
+CONTEXTS = {2: 1, 3: 0, 4: 1, 9: 2, 12: 3}
 SAMPLES = 2 * 250000
 
 
@@ -28,10 +28,10 @@ if __name__ == "__main__":
     days = sorted(data.day.unique())
     data["fold"] = -1
     rest = data[data.day < days[int(0.9 * len(days))]]
-    for fold, (_, rows) in enumerate(StratifiedGroupKFold(5).split(rest, rest.label, rest.day)):
+    for fold, (_, rows) in enumerate(StratifiedGroupKFold(5).split(rest, rest.Context, rest.day)):
         data.loc[rest.index[rows], "fold"] = fold
-    extra = (data.label == 4).sum() - (data.label == 2).sum()
-    data = data.drop(data[data.label == 4].sample(extra, random_state=0).index).reset_index(drop=True)
+    extra = (data.Context == 12).sum() - (data.Context == 4).sum()
+    data = data.drop(data[data.Context == 12].sample(extra, random_state=0).index).reset_index(drop=True)
 
     with ProcessPoolExecutor() as pool:
         x = list(pool.map(spectrogram, data["File name"], data["Start sample"], data["End sample"], chunksize=64))

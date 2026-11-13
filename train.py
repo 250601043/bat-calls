@@ -9,7 +9,7 @@ import torchvision
 from sklearn.metrics import classification_report
 from torch.utils.data import DataLoader, TensorDataset
 
-CLASSES = ["Biting", "Feeding", "Fighting", "Mating protest", "Sleeping"]
+CLASSES = ["Feeding", "Fighting", "Mating protest", "Sleeping"]
 device = "cuda" if torch.cuda.is_available() else "cpu"
 random.seed(0)
 torch.manual_seed(0)
