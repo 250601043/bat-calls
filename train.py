@@ -1,4 +1,5 @@
 import random
+import sys
 
 import numpy as np
 import pandas as pd
@@ -50,8 +51,10 @@ def accuracy(truth, guesses, n):
     return (truth[:, None] == guesses[:, :n]).any(1).mean()
 
 
+folds = [-1] if "test" in sys.argv else range(5)
 all_truth, all_guesses = [], []
-for fold in range(5):
+for fold in folds:
+    name = "test days" if fold == -1 else f"fold {fold + 1}"
     train = loader((y.fold >= 0) & (y.fold != fold), True)
     val = loader(y.fold == fold, False)
     model = torchvision.models.resnet18(weights="IMAGENET1K_V1")
@@ -68,9 +71,9 @@ for fold in range(5):
             loss.backward()
             optimizer.step()
         truth, guesses = predict(train)
-        print(f"fold {fold + 1}, epoch {epoch + 1}: train accuracy {accuracy(truth, guesses, 1):.3f}", end=", ")
+        print(f"{name}, epoch {epoch + 1}: train accuracy {accuracy(truth, guesses, 1):.3f}", end=", ")
         truth, guesses = predict(val)
-        print(f"validation accuracy {accuracy(truth, guesses, 1):.3f}, within two guesses {accuracy(truth, guesses, 2):.3f}", flush=True)
+        print(f"held-out accuracy {accuracy(truth, guesses, 1):.3f}, within two guesses {accuracy(truth, guesses, 2):.3f}", flush=True)
     all_truth += truth.tolist()
     all_guesses += guesses.tolist()
 
