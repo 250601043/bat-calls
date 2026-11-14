@@ -22,12 +22,12 @@ hours = torch.tensor(y.hour.to_numpy())
 
 def loader(rows, train):
     rows = torch.tensor(rows.to_numpy())
-    return DataLoader(TensorDataset(x[rows], labels[rows], hours[rows]), batch_size=32, shuffle=train)
+    return DataLoader(TensorDataset(x[rows], labels[rows], hours[rows]), batch_size=64, shuffle=train)
 
 
 def blank_strips(images):
     for image in images:
-        f, t = random.randrange(112), random.randrange(496)
+        f, t = random.randrange(112), random.randrange(240)
         image[f:f + random.randrange(17)] = -80
         image[:, t:t + random.randrange(17)] = -80
     return images
@@ -61,8 +61,8 @@ for fold in folds:
     val = loader(y.fold == fold, False)
     clock = pd.crosstab(y.hour[rows], y.label[rows]) + 1
     clock = torch.tensor((clock / clock.sum()).to_numpy())
-    model = torchvision.models.resnet50(weights="IMAGENET1K_V1")
-    model.fc = nn.Linear(2048, len(CLASSES))
+    model = torchvision.models.resnet18(weights="IMAGENET1K_V1")
+    model.fc = nn.Linear(512, len(CLASSES))
     model.to(device)
     loss_function = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)

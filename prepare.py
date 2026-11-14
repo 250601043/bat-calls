@@ -7,7 +7,7 @@ import soundfile as sf
 import torch
 
 CONTEXTS = {2: 0, 3: 1, 4: 2, 9: 3, 12: 4}
-SAMPLES = 4 * 250000
+SAMPLES = 2 * 250000
 
 
 def spectrogram(name, start, end):
@@ -15,7 +15,7 @@ def spectrogram(name, start, end):
     audio = np.pad(audio, (0, SAMPLES - len(audio)))
     spec = np.abs(librosa.stft(audio, n_fft=1024, hop_length=256))[:256]
     spec = librosa.amplitude_to_db(spec, ref=np.max, top_db=80)
-    return torch.nn.functional.adaptive_avg_pool2d(torch.tensor(spec)[None], (128, 512))[0].numpy().astype(np.float16)
+    return torch.nn.functional.adaptive_avg_pool2d(torch.tensor(spec)[None], (128, 256))[0].numpy().astype(np.float16)
 
 
 if __name__ == "__main__":
