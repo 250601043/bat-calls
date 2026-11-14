@@ -9,14 +9,14 @@ import torchvision
 from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader, TensorDataset
 
-CLASSES = ["Biting", "Feeding", "Fighting", "Mating protest", "Sleeping"]
+CLASSES = ["Other", "Feeding"]
 device = "cuda" if torch.cuda.is_available() else "cpu"
 random.seed(0)
 torch.manual_seed(0)
 
 x = torch.from_numpy(np.load("data/x.npy"))
 y = pd.read_csv("data/y.csv")
-labels = torch.tensor(y.label.to_numpy())
+labels = torch.tensor((y.label == 1).to_numpy()).long()
 
 
 def loader(rows, train):
