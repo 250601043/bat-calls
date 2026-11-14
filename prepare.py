@@ -24,6 +24,7 @@ if __name__ == "__main__":
     data = annotations[annotations.Context.isin(CONTEXTS)].merge(info, on="FileID")
     data["label"] = data.Context.map(CONTEXTS)
     data["day"] = data["Recording time"].str[:10]
+    data["hour"] = data["Recording time"].str[11:13].astype(int)
     days = sorted(data.day.unique())
     cut = int(0.9 * len(days))
     data["fold"] = data.day.map({day: i * 5 // cut if i < cut else -1 for i, day in enumerate(days)})
@@ -33,5 +34,5 @@ if __name__ == "__main__":
     with ProcessPoolExecutor() as pool:
         x = list(pool.map(spectrogram, data["File name"], data["Start sample"], data["End sample"], chunksize=64))
     np.save("data/x.npy", np.stack(x))
-    data[["label", "fold"]].to_csv("data/y.csv", index=False)
+    data[["label", "fold", "hour"]].to_csv("data/y.csv", index=False)
     print(pd.crosstab(data.label, data.fold))

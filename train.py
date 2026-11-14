@@ -17,11 +17,12 @@ torch.manual_seed(0)
 x = torch.from_numpy(np.load("data/x.npy"))
 y = pd.read_csv("data/y.csv")
 labels = torch.tensor(y.label.to_numpy())
+hours = torch.tensor(y.hour.to_numpy())
 
 
 def loader(rows, train):
     rows = torch.tensor(rows.to_numpy())
-    return DataLoader(TensorDataset(x[rows], labels[rows]), batch_size=64, shuffle=train)
+    return DataLoader(TensorDataset(x[rows], labels[rows], hours[rows]), batch_size=64, shuffle=train)
 
 
 def blank_strips(images):
@@ -41,9 +42,9 @@ def predict(data):
     model.eval()
     truth, guesses = [], []
     with torch.no_grad():
-        for images, target in data:
+        for images, target, hour in data:
             truth += target.tolist()
-            guesses += run(images).topk(2).indices.tolist()
+            guesses += (run(images).softmax(1).cpu() * clock[hour]).topk(2).indices.tolist()
     return np.array(truth), np.array(guesses)
 
 
@@ -55,8 +56,11 @@ folds = [-1] if "test" in sys.argv else range(5)
 all_truth, all_guesses = [], []
 for fold in folds:
     name = "test days" if fold == -1 else f"fold {fold + 1}"
-    train = loader((y.fold >= 0) & (y.fold != fold), True)
+    rows = (y.fold >= 0) & (y.fold != fold)
+    train = loader(rows, True)
     val = loader(y.fold == fold, False)
+    clock = pd.crosstab(y.hour[rows], y.label[rows]) + 1
+    clock = torch.tensor((clock / clock.sum()).to_numpy())
     model = torchvision.models.resnet18(weights="IMAGENET1K_V1")
     model.fc = nn.Linear(512, len(CLASSES))
     model.to(device)
@@ -66,7 +70,7 @@ for fold in folds:
 
     for epoch in range(4):
         model.train()
-        for images, target in train:
+        for images, target, _ in train:
             loss = loss_function(run(blank_strips(images)), target.to(device))
             optimizer.zero_grad()
             loss.backward()
