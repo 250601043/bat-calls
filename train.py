@@ -27,7 +27,7 @@ def loader(rows, train):
 
 def blank_strips(images):
     for image in images:
-        f, t = random.randrange(112), random.randrange(240)
+        f, t = random.randrange(112), random.randrange(496)
         image[f:f + random.randrange(17)] = -80
         image[:, t:t + random.randrange(17)] = -80
     return images
