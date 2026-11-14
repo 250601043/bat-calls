@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader, TensorDataset
 
 CLASSES = ["Biting", "Feeding", "Fighting", "Mating protest", "Sleeping"]
@@ -82,6 +82,7 @@ for fold in folds:
 truth, guesses = np.array(all_truth), np.array(all_guesses)
 counts = np.sort(np.bincount(truth))[::-1]
 print(classification_report(truth, guesses[:, 0], target_names=CLASSES, digits=3))
+print(confusion_matrix(truth, guesses[:, 0]))
 print(f"one guess: model {accuracy(truth, guesses, 1):.3f}, blind guess {counts[0] / len(truth):.3f}")
 print(f"two guesses: model {accuracy(truth, guesses, 2):.3f}, blind guess {counts[:2].sum() / len(truth):.3f}")
 for i, name in enumerate(CLASSES):
