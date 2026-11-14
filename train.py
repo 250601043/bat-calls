@@ -64,7 +64,7 @@ for fold in folds:
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
-    for epoch in range(5):
+    for epoch in range(4):
         model.train()
         for images, target in train:
             loss = loss_function(run(blank_strips(images)), target.to(device))
