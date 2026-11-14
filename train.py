@@ -58,7 +58,7 @@ for fold in folds:
     name = "test days" if fold == -1 else f"fold {fold + 1}"
     rows = (y.fold >= 0) & (y.fold != fold)
     train = loader(rows, True)
-    val = loader(y.fold == fold, False)
+    val = loader((y.fold == fold) & (y.delay == 0), False)
     clock = pd.crosstab(y.hour[rows], y.label[rows]) + 1
     clock = torch.tensor((clock / clock.sum()).to_numpy())
     model = torchvision.models.resnet18(weights="IMAGENET1K_V1")
